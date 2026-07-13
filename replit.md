@@ -1,6 +1,6 @@
-# [Project name]
+# Billionaire Analytics Terminal
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+An AI-powered NSE/BSE stock analytics dashboard: search stocks, view AI/quality/health/growth/valuation/risk scores and buy/hold/avoid calls, track a watchlist and portfolio, and read market news.
 
 ## Run & Operate
 
@@ -22,15 +22,25 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- API contract (source of truth): `lib/api-spec/openapi.yaml` — regenerate hooks/schemas after edits (see codegen command above)
+- DB schema: `lib/db/src/schema/` (stocks, financialMetrics, news, watchlist, portfolioHoldings)
+- API routes: `artifacts/api-server/src/routes/`
+- Frontend app: `artifacts/billionaire-analytics-terminal/src/` (pages in `src/pages`, theme in `src/index.css`)
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Built as a React + Vite + TypeScript SPA (this monorepo's `react-vite` artifact type) rather than literal Next.js, since Next.js isn't a supported artifact type here — same stack otherwise (React, TS, Tailwind, TanStack Query).
+- Stock `change`/`changePercent` are derived at request time from `price`/`previousClose` rather than stored, so they never drift out of sync.
+- Stock data is realistic seeded data (18 real NSE large-caps with financial metrics and news), not a live market feed — no live-data integration was requested/connected.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Dashboard: top gainers/losers/most active, latest market news
+- Stock detail: live price, Buy/Hold/Avoid call, AI conviction score, factor scores (business quality, financial health, growth, valuation, risk), financial metrics table, per-stock news, add-to-watchlist
+- Watchlist: tracked stocks with live price/change/AI score, remove action
+- Portfolio: holdings with quantity/avg buy price/current value/P&L, add/edit/delete, aggregate summary
+- Market news feed with sentiment tags
+- Global search (symbol or company name) with quick navigation to stock detail
 
 ## User preferences
 
@@ -38,7 +48,7 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- After changing `lib/api-spec/openapi.yaml`, always rerun the Orval codegen command before touching frontend/backend code that depends on the new types.
 
 ## Pointers
 

@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Billionaire Analytics Terminal"
+version = "1.0.0"
+id = "artifacts/billionaire-analytics-terminal"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24772
+
+[services.development]
+run = "pnpm --filter @workspace/billionaire-analytics-terminal run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/billionaire-analytics-terminal", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/billionaire-analytics-terminal/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24772"
+BASE_PATH = "/"

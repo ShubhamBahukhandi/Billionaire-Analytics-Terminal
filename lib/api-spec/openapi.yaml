@@ -3,13 +3,23 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Billionaire Analytics Terminal API — AI-powered NSE/BSE stock analytics
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: stocks
+    description: Stock search, detail, metrics, and news
+  - name: news
+    description: Market news
+  - name: watchlist
+    description: User watchlist
+  - name: portfolio
+    description: User portfolio holdings
+  - name: dashboard
+    description: Dashboard aggregate data
 paths:
   /healthz:
     get:
@@ -24,6 +34,275 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /stocks:
+    get:
+      operationId: listStocks
+      tags: [stocks]
+      summary: Search / list stocks
+      parameters:
+        - name: query
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Search term matched against symbol and name
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: List of matching stocks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Stock"
+
+  /stocks/{symbol}:
+    get:
+      operationId: getStock
+      tags: [stocks]
+      summary: Get a single stock's full detail
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Stock detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stock"
+        "404":
+          description: Not found
+
+  /stocks/{symbol}/metrics:
+    get:
+      operationId: getStockMetrics
+      tags: [stocks]
+      summary: Get financial metrics for a stock
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Financial metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FinancialMetrics"
+        "404":
+          description: Not found
+
+  /stocks/{symbol}/news:
+    get:
+      operationId: getStockNews
+      tags: [stocks]
+      summary: Get news items for a stock
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: News items for the stock
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NewsItem"
+
+  /news:
+    get:
+      operationId: listNews
+      tags: [news]
+      summary: List latest market-wide news
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 12
+      responses:
+        "200":
+          description: Latest news
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NewsItem"
+
+  /watchlist:
+    get:
+      operationId: listWatchlist
+      tags: [watchlist]
+      summary: List watchlist items
+      responses:
+        "200":
+          description: Watchlist items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WatchlistItem"
+    post:
+      operationId: addWatchlistItem
+      tags: [watchlist]
+      summary: Add a stock to the watchlist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WatchlistInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchlistItem"
+        "404":
+          description: Stock not found
+        "409":
+          description: Already in watchlist
+
+  /watchlist/{symbol}:
+    delete:
+      operationId: removeWatchlistItem
+      tags: [watchlist]
+      summary: Remove a stock from the watchlist
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Removed
+        "404":
+          description: Not found
+
+  /portfolio:
+    get:
+      operationId: listPortfolioHoldings
+      tags: [portfolio]
+      summary: List portfolio holdings
+      responses:
+        "200":
+          description: Portfolio holdings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PortfolioHolding"
+    post:
+      operationId: addPortfolioHolding
+      tags: [portfolio]
+      summary: Add a portfolio holding
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PortfolioHoldingInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PortfolioHolding"
+        "404":
+          description: Stock not found
+
+  /portfolio/{id}:
+    patch:
+      operationId: updatePortfolioHolding
+      tags: [portfolio]
+      summary: Update a portfolio holding
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PortfolioHoldingUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PortfolioHolding"
+        "404":
+          description: Not found
+    delete:
+      operationId: deletePortfolioHolding
+      tags: [portfolio]
+      summary: Delete a portfolio holding
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  /portfolio/summary:
+    get:
+      operationId: getPortfolioSummary
+      tags: [portfolio]
+      summary: Get aggregate portfolio performance
+      responses:
+        "200":
+          description: Portfolio summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PortfolioSummary"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard aggregate data (top gainers/losers/most active)
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +313,212 @@ components:
       required:
         - status
 
+    Stock:
+      type: object
+      required:
+        - symbol
+        - name
+        - exchange
+        - sector
+        - price
+        - previousClose
+        - change
+        - changePercent
+        - dayHigh
+        - dayLow
+        - volume
+        - marketCapCr
+        - aiScore
+        - recommendation
+        - businessQualityScore
+        - financialHealthScore
+        - growthScore
+        - valuationScore
+        - riskScore
+        - updatedAt
+      properties:
+        symbol: { type: string }
+        name: { type: string }
+        exchange: { type: string, enum: [NSE, BSE] }
+        sector: { type: string }
+        price: { type: number }
+        previousClose: { type: number }
+        change: { type: number }
+        changePercent: { type: number }
+        dayHigh: { type: number }
+        dayLow: { type: number }
+        volume: { type: integer }
+        marketCapCr: { type: number }
+        aiScore: { type: integer }
+        recommendation: { type: string, enum: [BUY, HOLD, AVOID] }
+        businessQualityScore: { type: integer }
+        financialHealthScore: { type: integer }
+        growthScore: { type: integer }
+        valuationScore: { type: integer }
+        riskScore: { type: integer }
+        updatedAt: { type: string, format: date-time }
+
+    FinancialMetrics:
+      type: object
+      required:
+        - symbol
+        - revenueCr
+        - revenueGrowthYoyPercent
+        - netProfitCr
+        - profitGrowthYoyPercent
+        - epsInr
+        - peRatio
+        - pbRatio
+        - roePercent
+        - rocePercent
+        - debtToEquity
+        - dividendYieldPercent
+        - promoterHoldingPercent
+      properties:
+        symbol: { type: string }
+        revenueCr: { type: number }
+        revenueGrowthYoyPercent: { type: number }
+        netProfitCr: { type: number }
+        profitGrowthYoyPercent: { type: number }
+        epsInr: { type: number }
+        peRatio: { type: number }
+        pbRatio: { type: number }
+        roePercent: { type: number }
+        rocePercent: { type: number }
+        debtToEquity: { type: number }
+        dividendYieldPercent: { type: number }
+        promoterHoldingPercent: { type: number }
+
+    NewsItem:
+      type: object
+      required:
+        - id
+        - headline
+        - summary
+        - source
+        - sentiment
+        - publishedAt
+        - stockSymbol
+      properties:
+        id: { type: integer }
+        stockSymbol: { type: ["string", "null"] }
+        headline: { type: string }
+        summary: { type: string }
+        source: { type: string }
+        sentiment: { type: string, enum: [POSITIVE, NEGATIVE, NEUTRAL] }
+        publishedAt: { type: string, format: date-time }
+
+    WatchlistItem:
+      type: object
+      required:
+        - id
+        - symbol
+        - name
+        - price
+        - changePercent
+        - aiScore
+        - recommendation
+        - addedAt
+      properties:
+        id: { type: integer }
+        symbol: { type: string }
+        name: { type: string }
+        price: { type: number }
+        changePercent: { type: number }
+        aiScore: { type: integer }
+        recommendation: { type: string, enum: [BUY, HOLD, AVOID] }
+        addedAt: { type: string, format: date-time }
+
+    WatchlistInput:
+      type: object
+      required:
+        - symbol
+      properties:
+        symbol: { type: string }
+
+    PortfolioHolding:
+      type: object
+      required:
+        - id
+        - symbol
+        - name
+        - quantity
+        - avgBuyPrice
+        - currentPrice
+        - investedValue
+        - currentValue
+        - pnl
+        - pnlPercent
+        - buyDate
+      properties:
+        id: { type: integer }
+        symbol: { type: string }
+        name: { type: string }
+        quantity: { type: integer }
+        avgBuyPrice: { type: number }
+        currentPrice: { type: number }
+        investedValue: { type: number }
+        currentValue: { type: number }
+        pnl: { type: number }
+        pnlPercent: { type: number }
+        buyDate: { type: string, format: date }
+
+    PortfolioHoldingInput:
+      type: object
+      required:
+        - symbol
+        - quantity
+        - avgBuyPrice
+        - buyDate
+      properties:
+        symbol: { type: string }
+        quantity: { type: integer, minimum: 1 }
+        avgBuyPrice: { type: number, minimum: 0 }
+        buyDate: { type: string, format: date }
+
+    PortfolioHoldingUpdate:
+      type: object
+      properties:
+        quantity: { type: integer, minimum: 1 }
+        avgBuyPrice: { type: number, minimum: 0 }
+        buyDate: { type: string, format: date }
+
+    PortfolioSummary:
+      type: object
+      required:
+        - totalInvested
+        - currentValue
+        - totalPnl
+        - totalPnlPercent
+        - holdingsCount
+      properties:
+        totalInvested: { type: number }
+        currentValue: { type: number }
+        totalPnl: { type: number }
+        totalPnlPercent: { type: number }
+        holdingsCount: { type: integer }
+
+    DashboardSummary:
+      type: object
+      required:
+        - topGainers
+        - topLosers
+        - mostActive
+        - latestNews
+      properties:
+        topGainers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Stock"
+        topLosers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Stock"
+        mostActive:
+          type: array
+          items:
+            $ref: "#/components/schemas/Stock"
+        latestNews:
+          type: array
+          items:
+            $ref: "#/components/schemas/NewsItem"

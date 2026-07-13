@@ -1,0 +1,1 @@
+- [Next.js requests](nextjs-substitution.md) — this monorepo has no Next.js artifact type; build with `react-vite` instead and don't expose the substitution unless asked.
