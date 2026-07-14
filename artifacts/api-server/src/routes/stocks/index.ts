@@ -17,7 +17,7 @@ import {
   ListStocksResponse,
 } from "@workspace/api-zod";
 import { withChange, withChangeMany } from "../../lib/stockAggregates";
-
+import { getLiveStock } from "../../services/marketService";
 const router: IRouter = Router();
 
 router.get("/stocks", async (req, res): Promise<void> => {
@@ -52,22 +52,25 @@ router.get("/stocks", async (req, res): Promise<void> => {
 
 router.get("/stocks/:symbol", async (req, res): Promise<void> => {
   const params = GetStockParams.safeParse(req.params);
+
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
     return;
   }
 
-  const [stock] = await db
-    .select()
-    .from(stocksTable)
-    .where(eq(stocksTable.symbol, params.data.symbol.toUpperCase()));
+  try {
+    const symbol = `${params.data.symbol.toUpperCase()}.NS`;
 
-  if (!stock) {
-    res.status(404).json({ error: "Stock not found" });
-    return;
+    const liveStock = await getLiveStock(symbol);
+
+    res.json(liveStock);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      error: "Unable to fetch live market data",
+    });
   }
-
-  res.json(GetStockResponse.parse(withChange(stock)));
 });
 
 router.get("/stocks/:symbol/metrics", async (req, res): Promise<void> => {
